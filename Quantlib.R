@@ -44,6 +44,7 @@ loadAIMSymbols<-function()
   }
 }
 
+#Hassle GOOGLE for the OHLCV data for the symbols
 getRemoteDataG<-function(startDate)
 {
   #Make new environment and kick it up to parent
@@ -52,7 +53,7 @@ getRemoteDataG<-function(startDate)
   getSymbols(as.character(LonSymbols), src='google', index.class=c("POSIXt","POSIXct"), env=LoadedSymbols, from=startDate)
 }
 
-
+#Hassle Yahoo for the OHLCV data for the symbols
 getRemoteDataY<-function(startDate)
 {
   #Make new environment and kick it up to parent
@@ -61,6 +62,8 @@ getRemoteDataY<-function(startDate)
   getSymbols(as.character(LonSymbols), src='yahoo', index.class=c("POSIXt","POSIXct"), env=LoadedSymbols, from=startDate)
 }
 
+
+#Save out the LoadedSymbols environment
 saveLocalData<-function()
 {
   if(exists("LoadedSymbols"))
@@ -73,6 +76,8 @@ saveLocalData<-function()
   }
 }
 
+
+#Restore previously saved LoadedSymbols
 loadLocalData<-function()
 {
   if(file.exists("Symbols"))
@@ -88,7 +93,9 @@ loadLocalData<-function()
   }
 }
 
-sanityCheckSymbols<-function()
+
+#Check whether data is valid OHLCV and that the Volume isn't just 0
+checkSymbols<-function()
 {
   if(exists("LoadedSymbols"))
   {
@@ -116,21 +123,39 @@ sanityCheckSymbols<-function()
   }
 }
 
-hasDateSymbols<-function()
+
+
+#Check all symbols in the LoadedSymbols environment for a specific date
+hasDateSymbols<-function(date)
 {
   if(exists("LoadedSymbols"))
   {
     #Make dataframe for output and fix column header
     DateCheck<-as.data.frame(ls(LoadedSymbols))
     colnames(DateCheck)="Symbol"
-    
-    #Setup Table
-    
-    
-    return(DateCheck)  
+    DateCheck$Present="FASE"
+    for(symbol in ls(LoadedSymbols))
+    {
+    DateCheck[which(DateCheck$Symbol==symbol),]$Present<-!is.null(LoadedSymbols[[symbol]][date,which.i=TRUE]) 
     }
+    return(DateCheck)
+  }
   else
   {
     print("LoadedSymbols environment not found. Try loading some local or remote data first.")
   }
 }
+
+#Takes LoadedSymbols, calculates ratio of 50n and 20n SMA
+SMAFilter5020<-function()
+{
+  for(symbol in ls(LoadedSymbols))
+  {
+  Data<-Cl(LoadedSymbols[[symbol]])
+  if(nrow(Cl(LoadedSymbols[[symbol]]))>50)
+  {
+  SMA(Cl(Data),n = 20)/SMA(Cl(Data),n=50)
+  }
+  }
+}  
+  
