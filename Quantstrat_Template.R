@@ -6,13 +6,14 @@ rm(list = ls(.blotter), envir = .blotter)
 
 # Set the currency and the timezone
 currency('GBP')
-Sys.setenv(TZ = "GMT")
+Sys.setenv(TZ = "UTC")
 
 # Define symbols of interest
 symbols <- c(
   #"LON:IQE"#,"LON:JAY",
   #"LON:SOLG"#,"LON:CHAR","LON:CGH"
-  #,"LON:SQZ","LON:CPP","LON:AEN","LON:THR",
+  #,"LON:SQZ","LON:CPP","LON:AEN",
+  #"LON:THR",
   "LON:PURP"
 )
 
@@ -400,6 +401,6 @@ Return.annualized(portfRets)
 maxDrawdown(portfRets)
 ## [1] 0.09120687
 
-chartStrat()
+chartStrat("LON:PURP",`LON:PURP`)
 
 
