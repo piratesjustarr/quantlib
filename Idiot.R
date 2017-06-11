@@ -21,7 +21,7 @@ IdiotTrader<-function(TheDate)
     SellDate=as.Date(FakeToday)+sample(1:n,1)        
   }
   SellPrice<-as.numeric(Cl(MySymbols[[ChosenSymbol]][SellDate]))
-  print(paste("Bought",ChosenSymbol,"at",BuyPrice,"and sold on",SellDate,"for",SellPrice))
+  print(paste("Bought",ChosenSymbol,"at",BuyPrice,"and sold on",as.character(SellDate),"for",SellPrice))
   result<-c(ChosenSymbol,BuyPrice,SellDate,SellPrice)
   return(result) 
 }

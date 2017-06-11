@@ -1,3 +1,5 @@
+TradeRecords<-StratTrades
+
 nextWeek<-function()
 {
   FakeToday<<-as.Date(FakeToday)+7
@@ -15,4 +17,14 @@ nextDate<-function(newDate)
   StratTrades$HoldTime=as.Date(StratTrades$SellDate)-as.Date(StratTrades$BuyDate)
   print(newDate)
   print(StratTrades)
+}
+
+testloop<-function()
+{
+  for(i in 1:20)
+  {
+  nextWeek()
+  TradeRecords<-rbind(TradeRecords,StratTrades)
+  }
+  summary(TradeRecords)
 }

@@ -226,7 +226,7 @@ IdiotTrades<<-Trades
 ```{r, echo=FALSE, message=TRUE, warning=FALSE}
 #Re run from here!!
 
-FakeToday="2016-06-08"
+FakeToday="2017-05-20"
 print(paste("Checking: ",FakeToday))
 # if(is.weekend(FakeToday))
 # {
@@ -234,7 +234,7 @@ print(paste("Checking: ",FakeToday))
 # }
 # else
 # {
-pmargin=1.15
+pmargin=1.1
 slmargin=0.95
 
 Strategy1(FakeToday = FakeToday,pMargin = pmargin, slMargin = slmargin)
