@@ -47,7 +47,7 @@ Strategy1<-function(FakeToday,pMargin,slMargin)
   meanranks<-as.data.frame(colMeans(r))
   
   #Secondary ranking on RECENT performance
-  r<-last(r,"3 months")
+  r<-last(r,"1 months")
   meanranks$secondary<-as.data.frame(colMeans(r))
   meanranks$name<-rownames(meanranks)
   meanranks<-meanranks[order(meanranks[,1]),]
@@ -57,7 +57,7 @@ Strategy1<-function(FakeToday,pMargin,slMargin)
   #Get 20 best over all available data
   Top20<-head(meanranks,20)
   #print(Top50)
-  Top20<-Top50[order(Top50[,2]),]
+  Top20<-Top20[order(Top20[,2]),]
   
   #Get 5 best on recent performance
   Top5<-head(Top20,5)
@@ -72,10 +72,10 @@ Strategy1<-function(FakeToday,pMargin,slMargin)
   {
     clRSI<-RSI(Cl(MySymbols[[topper]][paste("::",FakeToday,sep="")]))
     #limit to last 20 days only
-    clRSI<-last(clRSI,"20 days")
+    clRSI<-last(clRSI,"30 days")
     sdRSI<-round(sd(clRSI,na.rm = TRUE),2)
     medianRSI<-round(median(clRSI,na.rm = TRUE),2)
-    print(paste(topper,"Current RSI",last(clRSI),"Limit RSI",medianRSI-(sdRSI*2),sep="/"))
+    print(paste(topper,"Current RSI",last(clRSI),"Limit RSI",medianRSI-(sdRSI*2.5),sep="/"))
     Limits[[topper]]=medianRSI-(sdRSI*1)
   }
   
@@ -166,7 +166,7 @@ Strategy1<-function(FakeToday,pMargin,slMargin)
 FakeToday="2017-06-09"
 print(paste("Checking: ",FakeToday))
 pmargin=1.1
-slmargin=0.95
+slmargin=0.9
 FakeToday=as.Date(FakeToday)-21
 system.time(Strategy1(FakeToday = FakeToday,pMargin = pmargin, slMargin = slmargin))
 StratTrades$HoldTime=as.Date(StratTrades$SellDate)-as.Date(StratTrades$BuyDate)
