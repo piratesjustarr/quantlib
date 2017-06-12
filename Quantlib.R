@@ -1,4 +1,3 @@
-
 # Installs basic BraveRock packages from git source alongside dependencies
 installQuantPackages<-function()
 {
@@ -159,3 +158,14 @@ SMAFilter5020<-function()
   }
 }  
   
+
+RefreshData<-function()
+{
+  print("Loading Symbols...")
+  loadAIMSymbols()
+  print("Getting data from Google...")
+  getRemoteDataG("2016-01-01")
+  print("Saving Data to disk...")
+  saveLocalData()
+  print("DONE.")
+}

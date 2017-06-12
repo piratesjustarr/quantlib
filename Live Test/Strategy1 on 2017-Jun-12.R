@@ -156,7 +156,7 @@ Strategy1<-function(FakeToday,pMargin,slMargin)
 
 FakeToday="2017-06-09"
 print(paste("Checking: ",FakeToday))
-pmargin=1.1
+pmargin=1.15
 slmargin=0.95
 
 system.time(Strategy1(FakeToday = FakeToday,pMargin = pmargin, slMargin = slmargin))
