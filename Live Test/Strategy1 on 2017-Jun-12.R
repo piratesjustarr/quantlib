@@ -47,7 +47,7 @@ Strategy1<-function(FakeToday,pMargin,slMargin)
   meanranks<-as.data.frame(colMeans(r))
   
   #Secondary ranking on RECENT performance
-  r<-last(r,"1 months")
+  r<-last(r,"3 months")
   meanranks$secondary<-as.data.frame(colMeans(r))
   meanranks$name<-rownames(meanranks)
   meanranks<-meanranks[order(meanranks[,1]),]
