@@ -4,7 +4,7 @@ loadLibraries()
 loadLocalData()
 
 RunDate="2017-04-01"
-FutureDate="2017-04-10"
+FutureDate="2017-06-10"
 
 #Parallelising code
 library(foreach)
@@ -129,4 +129,7 @@ for(sym in filteredSymbols)
 
 Results$FuturePrice<-FuturePrice
 Results$Gain=Results$FuturePrice/Results$currentPrice
+
+library(plotly)
+plot_ly(x=Results$PC1,y=Results$PC2,z=Results$PC3,size=Results$Gain, hoverinfo="Results$filteredSymbols+x+y+z")
 

@@ -2,6 +2,10 @@
 installQuantPackages<-function()
 {
   install.packages("devtools")
+  install.packages("doParallel")
+  install.packages("foreach")
+  install.packages("plotly")
+  install.packages("ggplot2")
   require(devtools)
   install_github("braverock/FinancialInstrument")
   install_github("joshuaulrich/xts")

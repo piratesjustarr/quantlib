@@ -57,7 +57,7 @@ Strategy1<-function(FakeToday,pMargin,slMargin)
   #Get 20 best over all available data
   Top20<-head(meanranks,20)
   #print(Top50)
-  Top20<-Top50[order(Top50[,2]),]
+  Top20<-Top20[order(Top20[,2]),]
   
   #Get 5 best on recent performance
   Top5<-head(Top20,5)
@@ -163,7 +163,7 @@ Strategy1<-function(FakeToday,pMargin,slMargin)
 
 ## Strategy Output
 
-FakeToday="2017-06-09"
+FakeToday="2017-05-09"
 print(paste("Checking: ",FakeToday))
 pmargin=1.1
 slmargin=0.95
