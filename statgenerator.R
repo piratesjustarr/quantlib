@@ -4,7 +4,7 @@ loadLibraries()
 loadLocalData()
 
 RunDate="2017-04-01"
-FutureDate="2017-06-10"
+FutureDate="2017-05-10"
 
 #Parallelising code
 library(foreach)

@@ -1,0 +1,59 @@
+Loading required package: slackr
+Loading required package: quantmod
+Loading required package: xts
+Loading required package: zoo
+
+Attaching package: 'zoo'
+
+The following objects are masked from 'package:base':
+
+    as.Date, as.Date.numeric
+
+Loading required package: TTR
+Loading required package: methods
+Version 0.4-0 included new data defaults. See ?getSymbols.
+Loading required package: quantstrat
+Loading required package: blotter
+Loading required package: FinancialInstrument
+Loading required package: PerformanceAnalytics
+
+Attaching package: 'PerformanceAnalytics'
+
+The following object is masked from 'package:graphics':
+
+    legend
+
+Loading required package: foreach
+Loading required package: readr
+Loading required package: chron
+
+Attaching package: 'chron'
+
+The following object is masked from 'package:foreach':
+
+    times
+
+[1] "Loading Symbols..."
+Parsed with column specification:
+cols(
+  Name = col_character(),
+  Ticker = col_character(),
+  Symbol = col_character(),
+  Symbol2 = col_character(),
+  Sector = col_character(),
+  TIDM = col_character(),
+  X7 = col_character()
+)
+[1] "Getting data from Google..."
+'getSymbols' currently uses auto.assign=TRUE by default, but will
+use auto.assign=FALSE in 0.5-0. You will still be able to use
+'loadSymbols' to automatically load data. getOption("getSymbols.env")
+and getOption("getSymbols.auto.assign") will still be checked for
+alternate defaults.
+
+This message is shown once per session and may be disabled by setting 
+options("getSymbols.warning4.0"=FALSE). See ?getSymbols for details.
+[1] "Saving Data to disk..."
+[1] "DONE."
+Warning message:
+Missing column names filled in: 'X7' [7] 
