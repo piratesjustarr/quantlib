@@ -1,0 +1,136 @@
+---
+title: "Skeleton Strategy Backtest"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+- For each date
+- Select share
+- Search buy signal
+- Search sell signal
+- Add to ledger
+
+```{r include=FALSE}
+
+# Variables go here
+
+testStartDate = "2016-03-01"
+
+# Functions
+
+runStrategy <- function(theDate)
+{
+  loadLocalData()
+  loadLibraries()
+  library(chron)
+
+  #createLedger()
+  
+  Ledger<-data.frame(matrix(ncol=4,nrow=0),stringsAsFactors = FALSE)
+  theDate<-as.Date(theDate)
+  
+  #Share Select
+  
+  ChosenSymbol<-sample(ls(LoadedSymbols),1)
+  
+  #Get Entry
+  BuyPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][theDate]))
+  
+  #Get Exit
+  n=21
+  SellDate<-as.Date(theDate)+sample(1:n,1)
+  while(is.weekend(SellDate)){SellDate=SellDate+1}
+    
+  if(SellDate>as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]])))))
+     {
+       SellDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
+     }
+  SellPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][SellDate]))
+  
+  
+  #Update Ledger
+  
+  #addBuyTransaction(Date = theDate,Symbol = ChosenSymbol,Price = BuyPrice)
+  #addSellTransaction(Date = SellDate,Symbol = ChosenSymbol,Price = SellPrice)
+
+  
+  # SWITCH ALL BELOW TO JUST RETURN LIST, PARSE THAT TO THE LEDGER AFTERWARDS.
+  #############################################################################
+    
+  # Ledger<-rbind(Ledger,c(as.character.Date(theDate),ChosenSymbol,BuyPrice,"Buy"))
+  # Ledger<-rbind(Ledger,c(as.character.Date(SellDate),ChosenSymbol,SellPrice,"Sell"))
+  # colnames(Ledger)<-c("Date","Symbol","Price","Buy/Sell")
+  # return(Ledger)
+  
+  LedgerData<-c(as.character.Date(theDate),ChosenSymbol,BuyPrice,SellDate,SellPrice)
+  return(LedgerData)
+}
+```
+
+- process ledger
+
+```{r include=FALSE}
+
+# Environment Setup
+
+options(stringsAsFactors = FALSE)
+
+#Parallelising code
+library(foreach)
+library(doParallel)
+
+
+#Zombie killer
+library(inline)
+includes <- '#include <sys/wait.h>'
+code <- 'int wstat; while (waitpid(-1, &wstat, WNOHANG) > 0) {};'
+wait <- cfunction(body=code, includes=includes, convention='.C')
+
+# Calculate the number of coreq
+no_cores <- detectCores() - 1
+
+# Initiate cluster
+cl<-makeCluster(no_cores)
+registerDoParallel(cl)
+
+
+#Let's get some stuff in here
+source("Quantlib.R")
+source("Ledger.R")
+
+loadLibraries()
+loadLocalData()
+
+createLedger()
+
+
+#Get date loop up and running
+timeIndex <- as.Date(index(Cl(LoadedSymbols[[ls(LoadedSymbols)[1]]])))
+dataStartDate <- first(timeIndex)
+
+#Check testStart is (sufficiently) after dataStart
+as.Date(testStartDate)-as.Date(dataStartDate)
+
+startOffset <- which(timeIndex==as.Date(testStartDate))
+
+# Da big loop
+
+#Ledger<-foreach(day = timeIndex[startOffset:length(timeIndex)], .combine = rbind)  %dopar% runStrategy(day)
+
+Ledger<-foreach(day = timeIndex[startOffset:length(timeIndex)])  %dopar% runStrategy(day)
+
+
+#Kill cluster and the Zombies
+stopImplicitCluster()
+closeAllConnections()
+```
+
+Output Here
+
+```{r}
+print(Ledger)
+```
+

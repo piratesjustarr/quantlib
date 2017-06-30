@@ -173,3 +173,19 @@ RefreshData<-function()
   saveLocalData()
   print("DONE.")
 }
+
+stripData<-function(FakeToday)
+{
+  StrippedSymbols<<-new.env()
+  
+  #COPY Symbols for ROC analysis
+  for(n in ls(LoadedSymbols, all.names=TRUE)) assign(n, get(n, LoadedSymbols), StrippedSymbols)
+  
+  #Remove data past start point to avoid lookahead bias
+  for (symbol in ls(StrippedSymbols))
+  {
+    print(paste("Stripping future data from",symbol))
+    StrippedSymbols[[symbol]]<-StrippedSymbols[[symbol]][paste("::",FakeToday,sep="")]
+    #print(last(StrippedSymbols[[symbol]]))
+  }
+}
