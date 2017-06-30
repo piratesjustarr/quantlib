@@ -111,7 +111,7 @@ system.time(LedgerData<-foreach(day = timeIndex[startOffset:length(timeIndex)]) 
 
 #Kill cluster and the Zombies
 stopImplicitCluster()
-closeAllConnections()
+#closeAllConnections()
 ```
 
 Output Here
@@ -127,8 +127,6 @@ for(entry in LedgerData)
 }
 
 colnames(Ledger)<-c("Symbol","BuyDate","BuyPrice","SellDate","SellPrice")
-
-print(Ledger)
 ```
 
 ```{r}
@@ -138,8 +136,10 @@ Ledger$SellPrice<-as.numeric(Ledger$SellPrice)
 Ledger$BuyPrice<-as.numeric(Ledger$BuyPrice)
 
 Ledger$Gain<-Ledger$SellPrice/Ledger$BuyPrice
-
+Ledger$HoldTime=Ledger$SellDate-Ledger$BuyDate
+print(Ledger)
+print(summary(Ledger$Gain))
 print(paste("Mean gain is",mean(Ledger$Gain)*100,"% over",nrow(Ledger),"trades."))
-
+print(mean(Ledger$HoldTime))
 ```
 
