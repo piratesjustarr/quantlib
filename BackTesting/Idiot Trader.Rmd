@@ -1,5 +1,5 @@
 ---
-title: "Skeleton Strategy Backtest"
+title: "The Idiot Trader Strategy Backtest"
 output:
   html_document:
     df_print: paged
@@ -8,9 +8,8 @@ editor_options:
 ---
 
 - For each date
-- Select share
-- Search buy signal
-- Search sell signal
+- Select share and buy
+- Hold for random 1-21 days (possibly a few more if lands on holiday/weekend)
 - Add to ledger
 
 ```{r include=FALSE}
@@ -68,13 +67,6 @@ options(stringsAsFactors = FALSE)
 library(foreach)
 library(doParallel)
 
-
-#Zombie killer
-library(inline)
-includes <- '#include <sys/wait.h>'
-code <- 'int wstat; while (waitpid(-1, &wstat, WNOHANG) > 0) {};'
-wait <- cfunction(body=code, includes=includes, convention='.C')
-
 # Calculate the number of coreq
 no_cores <- detectCores() - 1
 
@@ -85,12 +77,9 @@ registerDoParallel(cl)
 
 #Let's get some stuff in here
 source("Quantlib.R")
-source("Ledger.R")
 
 loadLibraries()
 loadLocalData()
-
-createLedger()
 
 
 #Get date loop up and running

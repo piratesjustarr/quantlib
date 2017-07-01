@@ -1,5 +1,5 @@
 ---
-title: "Skeleton Strategy Backtest"
+title: "The Idiot Trader Strategy Backtest"
 output:
   html_document:
     df_print: paged
@@ -8,9 +8,8 @@ editor_options:
 ---
 
 - For each date
-- Select share
-- Search buy signal
-- Search sell signal
+- Select share and buy
+- Hold for random 1-21 days (possibly a few more if lands on holiday/weekend)
 - Add to ledger
 
 ```{r include=FALSE}
@@ -135,11 +134,13 @@ Ledger$SellDate<-as.Date(Ledger$SellDate)
 Ledger$SellPrice<-as.numeric(Ledger$SellPrice)
 Ledger$BuyPrice<-as.numeric(Ledger$BuyPrice)
 
-Ledger$Gain<-Ledger$SellPrice/Ledger$BuyPrice
+Ledger$return<-Ledger$SellPrice/Ledger$BuyPrice
 Ledger$HoldTime=Ledger$SellDate-Ledger$BuyDate
 print(Ledger)
-print(summary(Ledger$Gain))
-print(paste("Mean gain is",mean(Ledger$Gain)*100,"% over",nrow(Ledger),"trades."))
+print(summary(Ledger$return))
+print(paste("Mean return is",mean(Ledger$return)*100,"% over",nrow(Ledger),"trades."))
 print(mean(Ledger$HoldTime))
+
+plot(density(Ledger$return),main = "Kernel Density Estimate of Returns")
 ```
 

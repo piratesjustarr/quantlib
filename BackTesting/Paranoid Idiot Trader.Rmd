@@ -1,5 +1,5 @@
 ---
-title: "Skeleton Strategy Backtest"
+title: "The Idiot Trader Strategy Backtest"
 output:
   html_document:
     df_print: paged
@@ -8,9 +8,8 @@ editor_options:
 ---
 
 - For each date
-- Select share
-- Search buy signal
-- Search sell signal
+- Select share and buy
+- Hold for amax of 1-21 days, but sell if we drop 5%
 - Add to ledger
 
 ```{r include=FALSE}
@@ -41,18 +40,47 @@ runStrategy <- function(theDate)
   
   #Get Exit
   n=21
-  SellDate<-as.Date(theDate)+sample(1:n,1)
-  while(is.weekend(SellDate)==TRUE){SellDate=SellDate+1}
-  while(is.holiday(SellDate)==TRUE){SellDate=SellDate+1}    
-  # if(SellDate>as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]])))))
-  #   {
-  #    SellDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
-  # }
+  lastDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
+  maxDate<-as.Date(theDate)+n
   
-  SellPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][SellDate]))
+  #Don't try and go into the FUTURE!
+  if(maxDate>lastDate){maxDate<-lastDate}
   
-  LedgerData<-c(ChosenSymbol,as.character.Date(theDate),BuyPrice,as.character.Date(SellDate),SellPrice)
-  return(LedgerData)
+  HoldData<-LoadedSymbols[[ChosenSymbol]][paste(theDate,"::",maxDate,sep="")]
+  print(HoldData)
+  if(has.Cl(HoldData))
+  {
+    HoldData<-getPrice(HoldData)
+    # First 5% loss close
+    StopLoss<-head(which(HoldData/BuyPrice<0.95),1)
+    print(StopLoss)
+    StopLoss<<-StopLoss
+    if(length(StopLoss)==0)
+    {
+      SellDate<-maxDate
+      
+    }
+    else
+    {
+      SellDate<-index(HoldData[StopLoss,])
+    }
+    
+    while(is.weekend(SellDate)==TRUE){SellDate=SellDate+1}
+    while(is.holiday(SellDate)==TRUE){SellDate=SellDate+1}    
+    # if(SellDate>as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]])))))
+    #   {
+    #    SellDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
+    # }
+    
+    SellPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][SellDate]))
+    
+    LedgerData<-c(ChosenSymbol,as.character.Date(theDate),BuyPrice,as.character.Date(SellDate),SellPrice)
+    return(LedgerData)
+  }
+  else
+  {
+    return(c(0,0,0,0,0))
+  }
 }
 ```
 
@@ -84,14 +112,10 @@ registerDoParallel(cl)
 
 
 #Let's get some stuff in here
-source("Quantlib.R")
-source("Ledger.R")
+source("../Quantlib.R")
 
 loadLibraries()
 loadLocalData()
-
-createLedger()
-
 
 #Get date loop up and running
 timeIndex <- as.Date(index(Cl(LoadedSymbols[[ls(LoadedSymbols)[1]]])))
