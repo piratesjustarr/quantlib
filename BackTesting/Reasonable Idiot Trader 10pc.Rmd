@@ -9,7 +9,7 @@ editor_options:
 
 - For each date
 - Select share and buy
-- Hold for amax of 1-21 days, but sell if we drop 5%
+- Hold for amax of 1-21 days, but sell if we drop 10%
 - Add to ledger
 
 ```{r include=FALSE}
@@ -51,24 +51,38 @@ runStrategy <- function(theDate)
   if(nrow(HoldData>0))
   {
     # First 5% loss close
-    StopLoss<-head(which(HoldData/BuyPrice<0.95),1)
+    StopLoss<-head(which(HoldData/BuyPrice<0.8),1)
+    StopGain<-head(which(HoldData/BuyPrice>1.1),1)
     print(StopLoss)
     StopLoss<<-StopLoss
-    if(length(StopLoss)==0)
+    StopGain<<-StopGain
+
+    SellDate<-maxDate
+    Comment<-"Dropthrough"
+    
+    if(length(StopLoss)==0 && length(StopGain)==0)
     {
       SellDate<-maxDate
-      Comment<-"Sell"
-      
-    }
-    else
-    {
-      SellDate<-index(HoldData[StopLoss,])
-      Comment<-"StopLoss"
+      Comment<-"Sell on hold"
     }
     
-    while(is.weekend(SellDate)==TRUE){SellDate=SellDate+1}
-    while(is.holiday(SellDate)==TRUE){SellDate=SellDate+1}    
-    # if(SellDate>as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]])))))
+    if(length(StopLoss)==0 && length(StopGain)!=0)
+    {
+      SellDate<-index(HoldData[StopGain,])
+      Comment<-"StopGain"
+    }
+    
+    if(length(StopLoss)!=0 && length(StopGain)==0)
+    {
+      SellDate<-index(HoldData[StopLoss,])
+      Comment<-"Stop Loss"
+    }
+
+    
+    #while(is.weekend(SellDate)==TRUE){SellDate=SellDate+1}
+    #while(is.holiday(SellDate)==TRUE){SellDate=SellDate+1}    
+   
+     # if(SellDate>as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]])))))
     #   {
     #    SellDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
     # }
@@ -80,7 +94,7 @@ runStrategy <- function(theDate)
   }
   else
   {
-    return(c(0,0,0,0,0))
+    return(c(NA,NA,NA,NA,NA,NA))
   }
 }
 ```
@@ -97,12 +111,6 @@ options(stringsAsFactors = FALSE)
 library(foreach)
 library(doParallel)
 
-
-#Zombie killer
-library(inline)
-includes <- '#include <sys/wait.h>'
-code <- 'int wstat; while (waitpid(-1, &wstat, WNOHANG) > 0) {};'
-wait <- cfunction(body=code, includes=includes, convention='.C')
 
 # Calculate the number of coreq
 no_cores <- detectCores() - 1

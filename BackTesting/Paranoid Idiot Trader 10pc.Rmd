@@ -9,7 +9,7 @@ editor_options:
 
 - For each date
 - Select share and buy
-- Hold for amax of 1-21 days, but sell if we drop 5%
+- Hold for amax of 1-21 days, but sell if we drop 10%
 - Add to ledger
 
 ```{r include=FALSE}
@@ -51,7 +51,7 @@ runStrategy <- function(theDate)
   if(nrow(HoldData>0))
   {
     # First 5% loss close
-    StopLoss<-head(which(HoldData/BuyPrice<0.95),1)
+    StopLoss<-head(which(HoldData/BuyPrice<0.9),1)
     print(StopLoss)
     StopLoss<<-StopLoss
     if(length(StopLoss)==0)
