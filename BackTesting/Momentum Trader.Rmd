@@ -1,0 +1,216 @@
+---
+title: "The Momentum Trader Strategy Backtest"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+- For each date
+- Select share as best return over previous month and buy
+- Hold for amax of 1-21 days, but sell if we drop 20% or gain 10%
+- Add to ledger
+
+```{r include=FALSE}
+
+# Variables go here
+
+testStartDate = "2016-03-01"
+
+# Functions
+
+runStrategy <- function(theDate)
+{
+  loadLocalData()
+  loadLibraries()
+  library(chron)
+
+  #createLedger()
+  
+  Ledger<-data.frame(matrix(ncol=5,nrow=0),stringsAsFactors = FALSE)
+  theDate<-as.Date(theDate)
+  
+  #Share Select
+  
+  
+  #Make a list
+  shift<-list()
+  
+  #Loop through known symbols
+  for (symbol in ls(LoadedSymbols))
+  {
+    delta=7
+    data<-Cl(LoadedSymbols[[symbol]])
+    #Only use data we have access to.
+    data<-data[paste("::",theDate,sep="")]
+    
+    #If we have enough data
+    if(nrow(data)>delta)
+    {
+      #Get ROC vs delta periods ago
+      val=median(ROC(data,n = delta),na.rm = TRUE)
+    }
+    else
+    {
+      #Else shove it to bottom of the pile
+      val=0
+    }
+    shift[symbol]<-val
+  }
+  shift<<-shift
+  #Transpose and sort
+  res<-(t(as.data.frame(shift)))
+  res<-res[order(res,decreasing = TRUE),]
+
+  # One from the top please carol
+  ChosenSymbol<<-names(res)[1]
+  #Fix name after previous transforms
+  ChosenSymbol<-gsub(ChosenSymbol,pattern = "\\.",replacement = ":")
+  print(ChosenSymbol)
+  
+  #Get Entry
+  BuyPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][theDate]))
+  
+  #Get Exit
+  n=21
+  lastDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
+  maxDate<-as.Date(theDate)+n
+  
+  #Don't try and go into the FUTURE!
+  if(maxDate>lastDate){maxDate<-lastDate}
+  
+  HoldData<-Cl(LoadedSymbols[[ChosenSymbol]][paste(theDate,"::",maxDate,sep="")])
+  print(HoldData)
+  if(nrow(HoldData>0))
+  {
+    # First 5% loss close
+    StopLoss<-head(which(HoldData/BuyPrice<0.8),1)
+    StopGain<-head(which(HoldData/BuyPrice>1.1),1)
+    print(StopLoss)
+    StopLoss<<-StopLoss
+    StopGain<<-StopGain
+
+    SellDate<-maxDate
+    Comment<-"Dropthrough"
+    
+    if(length(StopLoss)==0 && length(StopGain)==0)
+    {
+      SellDate<-maxDate
+      Comment<-"Sell on hold"
+    }
+    
+    if(length(StopLoss)==0 && length(StopGain)!=0)
+    {
+      SellDate<-index(HoldData[StopGain,])
+      Comment<-"StopGain"
+    }
+    
+    if(length(StopLoss)!=0 && length(StopGain)==0)
+    {
+      SellDate<-index(HoldData[StopLoss,])
+      Comment<-"Stop Loss"
+    }
+
+    
+    #while(is.weekend(SellDate)==TRUE){SellDate=SellDate+1}
+    #while(is.holiday(SellDate)==TRUE){SellDate=SellDate+1}    
+   
+     # if(SellDate>as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]])))))
+    #   {
+    #    SellDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
+    # }
+    
+    SellPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][SellDate]))
+    
+    LedgerData<-c(ChosenSymbol,as.character.Date(theDate),BuyPrice,as.character.Date(SellDate),SellPrice,Comment)
+    return(LedgerData)
+  }
+  else
+  {
+    return(c(NA,NA,NA,NA,NA,NA))
+  }
+}
+```
+
+- process ledger
+
+```{r include=FALSE}
+
+# Environment Setup
+
+options(stringsAsFactors = FALSE)
+
+#Parallelising code
+library(foreach)
+library(doParallel)
+
+
+# Calculate the number of coreq
+no_cores <- detectCores() - 1
+
+# Initiate cluster
+cl<-makeCluster(no_cores)
+registerDoParallel(cl)
+
+
+#Let's get some stuff in here
+source("Quantlib.R")
+
+loadLibraries()
+loadLocalData()
+
+#Get date loop up and running
+timeIndex <- as.Date(index(Cl(LoadedSymbols[[ls(LoadedSymbols)[1]]])))
+dataStartDate <- first(timeIndex)
+
+#Check testStart is (sufficiently) after dataStart
+as.Date(testStartDate)-as.Date(dataStartDate)
+
+startOffset <- which(timeIndex==as.Date(testStartDate))
+
+# Da big loop
+
+#Ledger<-foreach(day = timeIndex[startOffset:length(timeIndex)], .combine = rbind)  %dopar% runStrategy(day)
+
+system.time(LedgerData<-foreach(day = timeIndex[startOffset:length(timeIndex)])  %dopar% runStrategy(day))
+
+
+#Kill cluster and the Zombies
+stopImplicitCluster()
+#closeAllConnections()
+```
+
+Output Here
+
+```{r}
+
+Ledger<-data.frame(matrix(ncol=5,nrow=0),stringsAsFactors = FALSE)
+
+for(entry in LedgerData)
+{
+  if(length(entry)==6)
+    Ledger<-rbind(Ledger,entry)
+}
+
+Ledger<-na.omit(Ledger)
+
+colnames(Ledger)<-c("Symbol","BuyDate","BuyPrice","SellDate","SellPrice")
+```
+
+```{r}
+Ledger$BuyDate<-as.Date(Ledger$BuyDate)
+Ledger$SellDate<-as.Date(Ledger$SellDate)
+Ledger$SellPrice<-as.numeric(Ledger$SellPrice)
+Ledger$BuyPrice<-as.numeric(Ledger$BuyPrice)
+
+Ledger$return<-Ledger$SellPrice/Ledger$BuyPrice
+Ledger$HoldTime=Ledger$SellDate-Ledger$BuyDate
+print(Ledger)
+print(summary(Ledger$return))
+print(paste("Mean return is",mean(Ledger$return)*100,"% over",nrow(Ledger),"trades."))
+print(mean(Ledger$HoldTime))
+
+plot(density(Ledger$return),main = "Kernel Density Estimate of Returns")
+```
+
