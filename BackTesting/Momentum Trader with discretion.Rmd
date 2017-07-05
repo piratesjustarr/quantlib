@@ -20,6 +20,40 @@ testStartDate = "2016-03-01"
 
 # Functions
 
+
+nextDay<-function()
+{
+ testStartDate<<-as.Date(testStartDate)+1
+ print(testStartDate)
+ runStrategy(testStartDate)
+}
+
+
+runSerialTest <- function()
+{
+  #Let's get some stuff in here
+  source("Quantlib.R")
+  
+  loadLibraries()
+  loadLocalData()
+  
+  #Get date loop up and running
+  timeIndex <- as.Date(index(Cl(LoadedSymbols[[ls(LoadedSymbols)[1]]])))
+  dataStartDate <- first(timeIndex)
+  
+  #Check testStart is (sufficiently) after dataStart
+  as.Date(testStartDate)-as.Date(dataStartDate)
+  
+  startOffset <- which(timeIndex==as.Date(testStartDate))
+  LedgerData<-runStrategy(testStartDate)
+  for(day in timeIndex[startOffset:length(timeIndex)])
+  {
+    LedgerData<-rbind(LedgerData,print(paste("testing",day)))
+    runStrategy(day)
+  }
+  LedgerData<<-LedgerData
+}
+
 runStrategy <- function(theDate)
 {
   loadLocalData()
@@ -70,65 +104,79 @@ runStrategy <- function(theDate)
   print(ChosenSymbol)
   
   #Get Entry
-  BuyPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][theDate]))
+  Price<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][theDate]))
   
-  #Get Exit
-  n=21
-  lastDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
-  maxDate<-as.Date(theDate)+n
-  
-  #Don't try and go into the FUTURE!
-  if(maxDate>lastDate){maxDate<-lastDate}
-  
-  HoldData<-Cl(LoadedSymbols[[ChosenSymbol]][paste(theDate,"::",maxDate,sep="")])
-  print(HoldData)
-  if(nrow(HoldData>0))
+  #If current price is below last month average
+  Limit=median(median(last(Cl(LoadedSymbols[[ChosenSymbol]]),"1 week")),na.rm=TRUE)
+  print(Limit)
+  if(Limit>Price && length(Price)!=0)
   {
-    # First 5% loss close
-    StopLoss<-head(which(HoldData/BuyPrice<0.8),1)
-    StopGain<-head(which(HoldData/BuyPrice>1.1),1)
-    print(StopLoss)
-    StopLoss<<-StopLoss
-    StopGain<<-StopGain
-
-    SellDate<-maxDate
-    Comment<-"Dropthrough"
+    BuyPrice<-Price
     
-    if(length(StopLoss)==0 && length(StopGain)==0)
+    #Get Exit
+    n=21
+    lastDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
+    maxDate<-as.Date(theDate)+n
+    
+    #Don't try and go into the FUTURE!
+    if(maxDate>lastDate){maxDate<-lastDate}
+    
+    HoldData<-Cl(LoadedSymbols[[ChosenSymbol]][paste(theDate,"::",maxDate,sep="")])
+    print(HoldData)
+    if(nrow(HoldData>0))
     {
+      # First 5% loss close
+      StopLoss<-head(which(HoldData/BuyPrice<0.8),1)
+      StopGain<-head(which(HoldData/BuyPrice>1.1),1)
+      print(StopLoss)
+      StopLoss<<-StopLoss
+      StopGain<<-StopGain
+      
       SellDate<-maxDate
-      Comment<-"Sell on hold"
+      Comment<-"Dropthrough"
+      
+      if(length(StopLoss)==0 && length(StopGain)==0)
+      {
+        SellDate<-maxDate
+        Comment<-"Sell on hold"
+      }
+      
+      if(length(StopLoss)==0 && length(StopGain)!=0)
+      {
+        SellDate<-index(HoldData[StopGain,])
+        Comment<-"StopGain"
+      }
+      
+      if(length(StopLoss)!=0 && length(StopGain)==0)
+      {
+        SellDate<-index(HoldData[StopLoss,])
+        Comment<-"Stop Loss"
+      }
+      
+      
+      #while(is.weekend(SellDate)==TRUE){SellDate=SellDate+1}
+      #while(is.holiday(SellDate)==TRUE){SellDate=SellDate+1}    
+      
+      # if(SellDate>as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]])))))
+      #   {
+      #    SellDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
+      # }
+      
+      SellPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][SellDate]))
+      
+      LedgerData<-c(ChosenSymbol,as.character.Date(theDate),BuyPrice,as.character.Date(SellDate),SellPrice,Comment)
+      return(LedgerData)
     }
-    
-    if(length(StopLoss)==0 && length(StopGain)!=0)
-    {
-      SellDate<-index(HoldData[StopGain,])
-      Comment<-"StopGain"
-    }
-    
-    if(length(StopLoss)!=0 && length(StopGain)==0)
-    {
-      SellDate<-index(HoldData[StopLoss,])
-      Comment<-"Stop Loss"
-    }
+    else
 
-    
-    #while(is.weekend(SellDate)==TRUE){SellDate=SellDate+1}
-    #while(is.holiday(SellDate)==TRUE){SellDate=SellDate+1}    
-   
-     # if(SellDate>as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]])))))
-    #   {
-    #    SellDate<-as.Date(index(last(Cl(LoadedSymbols[[ChosenSymbol]]))))
-    # }
-    
-    SellPrice<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][SellDate]))
-    
-    LedgerData<-c(ChosenSymbol,as.character.Date(theDate),BuyPrice,as.character.Date(SellDate),SellPrice,Comment)
-    return(LedgerData)
-  }
+      {
+        return(c("No Entry point",NA,NA,NA,NA,NA))
+      }
+    }
+  
   else
   {
-    return(c(NA,NA,NA,NA,NA,NA))
+    return(c("No Hold Data",NA,NA,NA,NA,NA))
   }
 }
 ```
@@ -213,4 +261,3 @@ print(mean(Ledger$HoldTime))
 
 plot(density(Ledger$return),main = "Kernel Density Estimate of Returns")
 ```
-
