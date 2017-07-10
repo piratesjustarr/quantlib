@@ -108,7 +108,7 @@ registerDoParallel(cl)
 
 
 #Let's get some stuff in here
-source("../Quantlib.R")
+source("/Quantlib.R")
 
 loadLibraries()
 loadLocalData()

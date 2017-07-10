@@ -16,11 +16,10 @@ editor_options:
 
 # Variables go here
 
-testStartDate = "2017-03-10"
+testStartDate = "2016-03-01"
 
 # Functions
 
-library(compiler)
 
 nextDay<-function()
 {
@@ -99,7 +98,7 @@ runStrategy <- function(theDate)
   res<-res[order(res,decreasing = TRUE),]
 
   # One from the top please carol
-  ChosenSymbol<<-names(res)[2]
+  ChosenSymbol<<-names(res)[1]
   #Fix name after previous transforms
   ChosenSymbol<-gsub(ChosenSymbol,pattern = "\\.",replacement = ":")
   print(ChosenSymbol)
@@ -108,7 +107,7 @@ runStrategy <- function(theDate)
   Price<-as.numeric(Cl(LoadedSymbols[[ChosenSymbol]][theDate]))
   
   #If current price is below last month average
-  Limit=median(median(last(Cl(LoadedSymbols[[ChosenSymbol]]),"2 weeks")),na.rm=TRUE)
+  Limit=median(median(last(Cl(LoadedSymbols[[ChosenSymbol]]),"1 week")),na.rm=TRUE)
   print(Limit)
   if(Limit>Price && length(Price)!=0)
   {
@@ -180,8 +179,6 @@ runStrategy <- function(theDate)
     return(c("No Hold Data",NA,NA,NA,NA,NA))
   }
 }
-
-runStrategy<-cmpfun(runStrategy)
 ```
 
 - process ledger
@@ -224,7 +221,7 @@ startOffset <- which(timeIndex==as.Date(testStartDate))
 
 #Ledger<-foreach(day = timeIndex[startOffset:length(timeIndex)], .combine = rbind)  %dopar% runStrategy(day)
 
-print(system.time(LedgerData<-foreach(day = timeIndex[startOffset:length(timeIndex)])  %dopar% runStrategy(day)))
+system.time(LedgerData<-foreach(day = timeIndex[startOffset:length(timeIndex)])  %dopar% runStrategy(day))
 
 
 #Kill cluster and the Zombies
